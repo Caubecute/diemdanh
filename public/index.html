@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Điểm Danh – Ms. Nghi English</title>
+<style>
+  :root { --bg:#f1f5f9; --card:#fff; --ink:#0f172a; --mut:#64748b; --line:#e2e8f0; --pri:#2563eb; --ok:#059669; --warn:#d97706; --bad:#e11d48; --sky:#0284c7; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); padding-bottom:84px; }
+  button, input, select, textarea { font:inherit; color:inherit; }
+  button { cursor:pointer; border:0; border-radius:10px; padding:8px 12px; font-weight:700; background:#e2e8f0; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  input, select, textarea { width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:9px 10px; background:#fff; }
+  textarea { resize:vertical; min-height:60px; }
+  :focus-visible { outline:3px solid var(--pri); outline-offset:2px; }
+  label { display:block; font-size:12px; font-weight:700; color:var(--mut); margin-bottom:4px; }
+  .hidden { display:none !important; }
+  header { position:sticky; top:0; z-index:20; background:#0f172a; color:#fff; padding:10px 14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+  header h1 { margin:0; font-size:17px; }
+  #sync { font-size:12px; color:#a7f3d0; }
+  .tabs { display:flex; gap:6px; background:#1e293b; padding:4px; border-radius:12px; }
+  .tabs button { background:transparent; color:#cbd5e1; }
+  .tabs button.on { background:var(--pri); color:#fff; }
+  main { max-width:960px; margin:0 auto; padding:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; }
+  .row { display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); }
+  .h { font-weight:800; font-size:15px; margin:0 0 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .muted { color:var(--mut); font-size:13px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { background:#fff; border:2px solid var(--line); padding:7px 11px; border-radius:999px; font-weight:700; font-size:14px; }
+  .chip.on { border-color:var(--pri); background:#dbeafe; }
+  .chip.done { border-color:#86efac; background:#f0fdf4; }
+  .chip small { font-weight:600; color:var(--mut); }
+  .stu { border:2px solid var(--line); border-radius:16px; padding:12px; margin-bottom:10px; background:#fff; }
+  .stu.draft { border-color:#c7d2fe; }
+  .stu.sent { border-color:#7dd3fc; background:#f0f9ff; }
+  .stu.final { border-color:#cbd5e1; background:#f8fafc; }
+  .stu-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px; }
+  .stu-name { font-weight:800; font-size:16px; }
+  .badge { display:inline-block; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; margin-left:4px; }
+  .b-draft { background:#e0e7ff; color:#3730a3; } .b-sent { background:#e0f2fe; color:#075985; } .b-final { background:#1e293b; color:#fff; } .b-wait { background:#ffe4e6; color:#9f1239; }
+  .seg { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .seg button { background:#f1f5f9; border:2px solid transparent; font-size:13px; padding:6px 10px; }
+  .seg button.on { border-color:var(--pri); background:#dbeafe; color:#1e3a8a; }
+  .seg button.on.bad { border-color:var(--bad); background:#ffe4e6; color:#9f1239; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .fld { margin-bottom:8px; }
+  .mic { float:right; font-size:11px; padding:3px 8px; background:#eef2ff; color:#4338ca; margin-top:-4px; }
+  .mic.rec { background:var(--bad); color:#fff; }
+  .del { background:#fff1f2; color:var(--bad); font-size:13px; }
+  .btn-pri { background:var(--pri); color:#fff; } .btn-ok { background:var(--ok); color:#fff; } .btn-sky { background:var(--sky); color:#fff; }
+  #bar { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#fff; border-top:1px solid var(--line); padding:10px 14px; display:flex; gap:10px; align-items:center; justify-content:space-between; box-shadow:0 -6px 20px rgba(0,0,0,.06); }
+  #bar .info { font-size:13px; font-weight:700; }
+  #pend { background:#be123c; color:#fff; font-size:13px; font-weight:700; padding:8px 12px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+  #pend button { background:#fff; color:#be123c; font-size:12px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top; }
+  th { color:var(--mut); font-size:11px; text-transform:uppercase; }
+  tr.click { cursor:pointer; } tr.click:hover { background:#f8fafc; }
+  .num { text-align:center; white-space:nowrap; }
+  #toast { position:fixed; left:50%; transform:translateX(-50%); bottom:90px; z-index:50; background:#0f172a; color:#fff; padding:10px 16px; border-radius:12px; font-weight:700; font-size:14px; max-width:92vw; }
+  @media print {
+    header, #bar, #pend, .noprint, #ta, #tDay, #toast { display:none !important; }
+    body { background:#fff; padding:0; } .card { border:0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>📝 Điểm Danh</h1><div id="sync">Đang tải…</div></div>
+  <div class="tabs" role="tablist">
+    <button id="tabTA" class="on" onclick="showTab('ta')">Trợ giảng</button>
+    <button id="tabT" onclick="showTab('teacher')">🔒 Giáo viên</button>
+  </div>
+</header>
+
+<main>
+  <div id="pend" class="hidden"><span id="pendTxt"></span><button onclick="flush()">Gửi lại ngay</button></div>
+
+  <!-- ================= TRỢ GIẢNG ================= -->
+  <section id="ta">
+    <div class="card">
+      <div class="row">
+        <div><label for="taName">Tên trợ giảng</label><input id="taName" placeholder="VD: Duyên"></div>
+        <div><label for="taDate">Ngày dạy</label><input id="taDate" type="date"></div>
+        <div><label for="taSlot">Giờ học (mặc định)</label><input id="taSlot" placeholder="VD: 18:00 - 19:30"></div>
+        <div><label>Giọng nói khi bấm 🎤</label><button id="voiceBtn" onclick="toggleVoiceLang()" style="width:100%"></button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="h">1. Chọn học sinh có mặt hôm nay <span class="muted" id="stuInfo"></span></p>
+      <div class="row" style="margin-bottom:10px">
+        <div><label for="clsSel">Lớp</label><select id="clsSel"></select></div>
+        <div><label for="stuSearch">Tìm tên</label><input id="stuSearch" placeholder="Gõ tên…"></div>
+      </div>
+      <div class="chips" id="stuChips"></div>
+      <p class="muted" style="margin:8px 0 0">Bấm tên để thêm vào buổi hôm nay. Bấm lại tên đã chọn để xem phiếu của em đó.</p>
+    </div>
+
+    <p class="h" style="padding:0 4px">2. Nhập nhận xét từng em <span class="muted" id="dayInfo"></span></p>
+    <div id="dayList"></div>
+  </section>
+
+  <!-- ================= GIÁO VIÊN ================= -->
+  <section id="teacher" class="hidden">
+    <div class="card" id="tLogin">
+      <p class="h">Đăng nhập giáo viên</p>
+      <div class="row"><div><input id="tPass" type="password" placeholder="Mật khẩu giáo viên" onkeydown="if(event.key==='Enter')teacherLogin()"></div><div><button class="btn-pri" onclick="teacherLogin()">Mở khóa</button></div></div>
+      <p class="muted" id="tLoginErr"></p>
+    </div>
+
+    <div id="tArea" class="hidden">
+      <div class="card noprint" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div class="seg" style="margin:0">
+          <button id="tsDay" class="on" onclick="tSub('day')">Duyệt theo ngày</button>
+          <button id="tsMonth" onclick="tSub('month')">Tổng hợp theo tháng</button>
+        </div>
+        <button onclick="teacherLogout()">🔒 Khóa lại</button>
+      </div>
+
+      <div id="tDay">
+        <div class="card">
+          <p class="h">Buổi học trong ngày
+            <span><input id="tDate" type="date" style="width:auto"> <button class="btn-ok" id="btnConfirmDay" onclick="confirmDay()">✅ Xác nhận</button></span></p>
+          <p class="muted" style="margin:0">Trợ giảng gửi lên cuối ngày. Giáo viên sửa nếu cần rồi bấm <b>Xác nhận</b>; sau khi xác nhận trợ giảng không sửa được nữa.</p>
+        </div>
+        <div id="tDayList"></div>
+      </div>
+
+      <div id="tMonth" class="hidden">
+        <div class="card noprint">
+          <div class="row">
+            <div><label for="tMonthSel">Tháng</label><input id="tMonthSel" type="month"></div>
+            <div><label for="tCls">Lớp</label><select id="tCls"></select></div>
+            <div><label>&nbsp;</label><button onclick="exportCSV()">⬇️ Xuất Excel (CSV) cả tháng</button></div>
+          </div>
+        </div>
+        <div class="card noprint">
+          <p class="h">Học sinh trong tháng <span class="muted">Bấm một em để xem chi tiết & gửi phụ huynh</span></p>
+          <div style="overflow-x:auto"><table><thead><tr><th>Học sinh</th><th class="num">Buổi</th><th class="num">Có mặt</th><th class="num">Thái độ TB</th><th class="num">Bài tập TB</th><th class="num">Chờ xác nhận</th></tr></thead><tbody id="tMonthBody"></tbody></table></div>
+        </div>
+        <div class="card hidden" id="report"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="bar">
+  <span class="info" id="barInfo"></span>
+  <button class="btn-pri" id="btnSend" onclick="sendDay()">📨 Gửi giáo viên</button>
+</div>
+<div id="toast" class="hidden" role="status" aria-live="polite"></div>
+
+<script>
+const STATUS = { present: 'Có mặt', late: 'Đi trễ', excused: 'Vắng có phép', absent: 'Vắng' };
+const STATE = { draft: ['📝 Nháp', 'b-draft'], sent: ['📨 Đã gửi GV', 'b-sent'], final: ['🔒 GV đã xác nhận', 'b-final'] };
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+};
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s || '').normalize('NFC').replace(/\s+/g, ' ').trim().toLowerCase();
+const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const vnDate = s => s ? s.split('-').reverse().join('/') : '';
+const gradeNum = g => { const m = String(g || '').match(/\d+/); return m ? +m[0] : 999; };
+const isAbsent = r => r.status === 'excused' || r.status === 'absent';
+const newId = () => 'R_' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).slice(2));
+let toastT;
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2800); }
+function setSync(t) { $('sync').textContent = t; }
+
+// ---------------- gọi máy chủ ----------------
+let teacherPass = sessionStorage.getItem('dd_tpass') || '';
+async function api(path, opts = {}) {
+  const headers = { 'content-type': 'application/json' };
+  if (teacherPass) headers['x-teacher-pass'] = teacherPass;
+  const pin = LS.get('dd_tapin', ''); if (pin) headers['x-ta-pin'] = pin;
+  const res = await fetch(path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const data = await res.json().catch(() => ({ ok: false, message: 'Máy chủ trả lời lạ (' + res.status + ')' }));
+  if (res.status === 401 && /trợ giảng/.test(data.message || '')) {
+    const p = prompt('Nhập mã trợ giảng:'); if (p) { LS.set('dd_tapin', p.trim()); return api(path, opts); }
+  }
+  if (!res.ok || data.ok === false) throw new Error(data.message || ('Lỗi ' + res.status));
+  return data;
+}
+
+// ---------------- học sinh (từ Web Trả Bài) ----------------
+let students = LS.get('dd_students', []);
+async function loadStudents(refresh) {
+  try {
+    const d = await api('/api/students' + (refresh ? '?refresh=1' : ''));
+    if (d.students && d.students.length) { students = d.students; LS.set('dd_students', students); }
+    if (d.warning) toast(d.warning);
+  } catch (e) { toast('Chưa tải được danh sách học sinh: ' + e.message); }
+  buildClassSelects(); renderChips();
+}
+function buildClassSelects() {
+  const grades = [...new Set(students.map(s => s.grade))].sort((a, b) => gradeNum(a) - gradeNum(b) || a.localeCompare(b, 'vi'));
+  [['clsSel', LS.get('dd_cls', 'ALL')], ['tCls', 'ALL']].forEach(([id, def]) => {
+    const el = $(id), cur = el.value || def;
+    el.innerHTML = '<option value="ALL">Tất cả các lớp</option>' + grades.map(g => `<option>${esc(g)}</option>`).join('');
+    el.value = grades.includes(cur) ? cur : 'ALL';
+  });
+}
+function renderChips() {
+  const cls = $('clsSel').value, q = norm($('stuSearch').value);
+  const inDay = new Set(dayRecs().map(r => norm(r.student)));
+  const list = students.filter(s => (cls === 'ALL' || s.grade === cls) && (!q || norm(s.name).includes(q)))
+    .sort((a, b) => gradeNum(a.grade) - gradeNum(b.grade) || a.name.localeCompare(b.name, 'vi'));
+  $('stuInfo').textContent = list.length + ' học sinh';
+  $('stuChips').innerHTML = list.length ? list.map(s => `<button class="chip ${inDay.has(norm(s.name)) ? 'done' : ''}" data-name="${esc(s.name)}" data-grade="${esc(s.grade)}">${inDay.has(norm(s.name)) ? '✓ ' : ''}${esc(s.name)} <small>${cls === 'ALL' ? esc(s.grade) : ''}</small></button>`).join('')
+    : '<span class="muted">Chưa có học sinh. Kiểm tra Web Trả Bài rồi <a href="#" onclick="loadStudents(true);return false">tải lại</a>.</span>';
+}
+
+// ---------------- dữ liệu ngày & hàng đợi lưu ----------------
+let recs = {};                       // id -> bản ghi đang hiển thị (ngày của trợ giảng hoặc ngày giáo viên đang duyệt)
+let pending = LS.get('dd_pending_v1', {});   // id -> bản ghi chưa lên máy chủ
+const dayRecs = () => Object.values(recs).filter(r => r.date === $('taDate').value).sort((a, b) => (a.created || 0) - (b.created || 0) || a.student.localeCompare(b.student, 'vi'));
+
+async function loadDay(date, target) {
+  setSync('Đang tải ngày ' + vnDate(date) + '…');
+  try {
+    const d = await api('/api/day?date=' + date);
+    recs = {};
+    d.records.forEach((r, i) => { r.created = i; recs[r.id] = r; });
+    Object.values(pending).forEach(p => { if (p.date === date && !(recs[p.id] && recs[p.id].state === 'final' && !teacherPass)) recs[p.id] = Object.assign({}, recs[p.id], p); });
+    setSync('✅ Đã đồng bộ');
+  } catch (e) {
+    setSync('⚠️ Không tải được – đang dùng dữ liệu trên máy');
+    Object.values(pending).forEach(p => { if (p.date === date) recs[p.id] = p; });
+  }
+  target === 'teacher' ? renderTeacherDay() : renderDay();
+}
+
+function queueSave(r) {
+  r.updated_at = Date.now();
+  pending[r.id] = Object.assign({}, r);
+  LS.set('dd_pending_v1', pending) || toast('Bộ nhớ trình duyệt đầy – đừng đóng trang tới khi lưu xong.');
+  updateBar();
+  clearTimeout(queueSave.t); queueSave.t = setTimeout(flush, 700);
+}
+let flushing = false, flushErr = '';
+async function flush() {
+  const ids = Object.keys(pending);
+  if (flushing || !ids.length) { updateBar(); return; }
+  flushing = true; setSync('Đang lưu ' + ids.length + ' bản…');
+  const sent = {}; ids.forEach(id => sent[id] = JSON.stringify(pending[id]));
+  try {
+    const d = await api('/api/records', { method: 'POST', body: { records: ids.map(id => pending[id]) } });
+    flushErr = '';
+    d.results.forEach(x => {
+      if (x.ok || x.locked) { if (JSON.stringify(pending[x.id]) === sent[x.id]) delete pending[x.id]; }
+      if (x.ok && recs[x.id]) recs[x.id].state = x.state;
+      if (x.locked) toast(x.message);
+      if (!x.ok && !x.locked) flushErr = x.message;
+    });
+    LS.set('dd_pending_v1', pending);
+    setSync(Object.keys(pending).length ? '⚠️ Còn bản chưa lưu' : '✅ Đã lưu lên máy chủ');
+  } catch (e) { flushErr = e.message; setSync('⚠️ Chưa lưu được – sẽ tự thử lại'); }
+  flushing = false; updateBar(); refreshStateBadges();
+  if (Object.keys(pending).length && !flushErr) setTimeout(flush, 300);
+}
+setInterval(flush, 15000);
+addEventListener('online', flush);
+addEventListener('beforeunload', e => { if (Object.keys(pending).length) { e.preventDefault(); e.returnValue = ''; } });
+
+function updateBar() {
+  const n = Object.keys(pending).length;
+  $('pend').classList.toggle('hidden', !n);
+  $('pendTxt').textContent = `⚠️ ${n} bản chưa lên máy chủ – đang giữ trên máy này và tự gửi lại.` + (flushErr ? ' Lý do: ' + flushErr : '');
+  const list = dayRecs(), drafts = list.filter(r => r.state === 'draft').length, sent = list.filter(r => r.state !== 'draft').length;
+  const noEval = list.filter(r => !isAbsent(r) && (r.att == null || r.hw == null)).length;
+  $('barInfo').innerHTML = list.length ? `${list.length} em • ${drafts} nháp${sent ? ' • ' + sent + ' đã gửi' : ''}${noEval ? ` • <span style="color:var(--warn)">${noEval} chưa chấm điểm</span>` : ''}` : 'Chưa có học sinh nào hôm nay';
+  $('btnSend').disabled = !drafts;
+  $('dayInfo').textContent = list.length ? list.length + ' học sinh' : '';
+}
+
+// ---------------- phiếu từng học sinh ----------------
+function scoreSel(r, f, lock) {
+  return `<select data-f="${f}" ${lock ? 'disabled' : ''}><option value="">–</option>${[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => `<option ${r[f] === n ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+}
+function cardHTML(r, teacher) {
+  const lock = r.state === 'final' && !teacher;
+  const st = STATE[r.state] || STATE.draft;
+  const absent = isAbsent(r);
+  return `<div class="stu ${r.state}" data-id="${esc(r.id)}">
+    <div class="stu-top">
+      <div><span class="stu-name">${esc(r.student)}</span> <span class="muted">${esc(r.grade)}</span>
+        <div><span class="badge ${st[1]}" data-badge>${st[0]}</span>${pending[r.id] ? '<span class="badge b-wait">chưa lưu</span>' : ''}${teacher && r.ta ? `<span class="muted"> · TG: ${esc(r.ta)}</span>` : ''}</div></div>
+      ${(teacher || r.state === 'draft') ? `<button class="del" data-act="del">Xóa</button>` : ''}
+    </div>
+    <div class="seg">${Object.keys(STATUS).map(k => `<button data-act="status" data-v="${k}" class="${r.status === k ? 'on' : ''} ${k === 'excused' || k === 'absent' ? 'bad' : ''}" ${lock ? 'disabled' : ''}>${STATUS[k]}</button>`).join('')}</div>
+    <div class="grid2">
+      <div><label>Giờ học</label><input data-f="slot" value="${esc(r.slot)}" ${lock ? 'disabled' : ''}></div>
+      <div><label>Bài học</label><input data-f="lesson" value="${esc(r.lesson)}" placeholder="VD: Unit 3" ${lock ? 'disabled' : ''}></div>
+    </div>
+    <div class="${absent ? 'hidden' : ''}" data-when="present">
+      <div class="grid2">
+        <div><label>Thái độ / tập trung</label>${scoreSel(r, 'att', lock)}</div>
+        <div><label>Bài tập / từ vựng</label>${scoreSel(r, 'hw', lock)}</div>
+      </div>
+      <div class="fld"><label>Nhận xét ${lock ? '' : '<button class="mic" data-act="mic" data-for="note">🎤 Nói</button>'}</label><textarea data-f="note" rows="2" ${lock ? 'disabled' : ''} placeholder="Hôm nay con…">${esc(r.note)}</textarea></div>
+      <div class="fld"><label>Dặn dò – con cần học gì ${lock ? '' : '<button class="mic" data-act="mic" data-for="todo">🎤 Nói</button>'}</label><textarea data-f="todo" rows="2" ${lock ? 'disabled' : ''}>${esc(r.todo)}</textarea></div>
+    </div>
+    ${teacher ? `<div class="fld"><label>Ghi chú của giáo viên ${'<button class="mic" data-act="mic" data-for="teacher_note">🎤 Nói</button>'}</label><textarea data-f="teacher_note" rows="2">${esc(r.teacher_note)}</textarea></div>` : (r.teacher_note ? `<p class="muted"><b>Giáo viên:</b> ${esc(r.teacher_note)}</p>` : '')}
+  </div>`;
+}
+function renderDay() {
+  const list = dayRecs();
+  $('dayList').innerHTML = list.length ? list.map(r => cardHTML(r, false)).join('')
+    : '<div class="card muted">Chưa có học sinh nào. Bấm tên học sinh ở trên để bắt đầu điểm danh.</div>';
+  renderChips(); updateBar();
+}
+function refreshStateBadges() {
+  document.querySelectorAll('.stu[data-id]').forEach(el => {
+    const r = recs[el.dataset.id]; if (!r) return;
+    const st = STATE[r.state] || STATE.draft, b = el.querySelector('[data-badge]');
+    if (b) { b.textContent = st[0]; b.className = 'badge ' + st[1]; }
+    el.className = 'stu ' + r.state;
+    const w = el.querySelector('.b-wait'); if (w && !pending[r.id]) w.remove();
+  });
+}
+
+function addStudent(name, grade) {
+  const date = $('taDate').value;
+  const ex = dayRecs().find(r => norm(r.student) === norm(name));
+  if (ex) { const el = document.querySelector(`.stu[data-id="${CSS.escape(ex.id)}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  const r = { id: newId(), date, student: name, grade, ta: $('taName').value.trim(), slot: $('taSlot').value.trim(), status: 'present', att: null, hw: null, lesson: '', note: '', todo: '', teacher_note: '', state: 'draft', created: Date.now() };
+  recs[r.id] = r; queueSave(r); renderDay();
+  toast('Đã thêm ' + name);
+}
+
+// Sửa ngay trên phiếu: mọi thay đổi tự lưu (không cần bấm nút Lưu)
+function onCardInput(ev) {
+  const card = ev.target.closest('.stu[data-id]'); if (!card) return;
+  const r = recs[card.dataset.id], f = ev.target.dataset.f; if (!r || !f) return;
+  r[f] = (f === 'att' || f === 'hw') ? (ev.target.value === '' ? null : +ev.target.value) : ev.target.value;
+  queueSave(r);
+}
+async function onCardClick(ev) {
+  const btn = ev.target.closest('button[data-act]'); if (!btn) return;
+  const card = btn.closest('.stu[data-id]'), r = card && recs[card.dataset.id]; if (!r) return;
+  const teacherView = !!btn.closest('#teacher');
+  if (btn.dataset.act === 'status') {
+    r.status = btn.dataset.v;
+    card.querySelectorAll('[data-act=status]').forEach(b => b.classList.toggle('on', b === btn));
+    card.querySelector('[data-when=present]').classList.toggle('hidden', isAbsent(r));
+    queueSave(r);
+  } else if (btn.dataset.act === 'del') {
+    if (!confirm('Xóa ' + r.student + ' khỏi buổi ' + vnDate(r.date) + '?')) return;
+    try {
+      await api('/api/records/' + encodeURIComponent(r.id), { method: 'DELETE' });
+      delete pending[r.id]; LS.set('dd_pending_v1', pending); delete recs[r.id];
+      teacherView ? renderTeacherDay() : renderDay(); toast('Đã xóa ' + r.student);
+    } catch (e) { toast(e.message); }
+  } else if (btn.dataset.act === 'mic') {
+    toggleMic(btn, card.querySelector(`[data-f="${btn.dataset.for}"]`));
+  }
+}
+document.addEventListener('input', ev => { if (ev.target.closest('.stu')) onCardInput(ev); });
+document.addEventListener('change', ev => { if (ev.target.tagName === 'SELECT' && ev.target.closest('.stu')) onCardInput(ev); });
+document.addEventListener('click', onCardClick);
+$('stuChips').addEventListener('click', ev => { const c = ev.target.closest('.chip'); if (c) addStudent(c.dataset.name, c.dataset.grade); });
+
+async function sendDay() {
+  const date = $('taDate').value, list = dayRecs(), drafts = list.filter(r => r.state === 'draft');
+  if (!drafts.length) return;
+  const noEval = drafts.filter(r => !isAbsent(r) && (r.att == null || r.hw == null)).length;
+  if (!confirm((noEval ? `⚠️ Còn ${noEval} em chưa chấm điểm.\n` : '') + `Gửi ${drafts.length} học sinh ngày ${vnDate(date)} cho giáo viên?\n(Vẫn sửa được cho tới khi giáo viên xác nhận.)`)) return;
+  await flush();
+  if (Object.keys(pending).some(id => pending[id].date === date)) return toast('Còn bản chưa lưu lên máy chủ. Kiểm tra mạng rồi bấm Gửi lại.');
+  $('btnSend').disabled = true;
+  try {
+    const d = await api('/api/day/send', { method: 'POST', body: { date } });
+    toast(`Đã gửi ${d.count} học sinh cho giáo viên.`); loadDay(date);
+  } catch (e) { toast('Chưa gửi được: ' + e.message); updateBar(); }
+}
+
+// ---------------- nhập bằng giọng nói ----------------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recBtn = null, voiceLang = LS.get('dd_voice', 'en-US');
+function stopMic() { if (rec) { try { rec.stop(); } catch (e) {} } rec = null; if (recBtn) { recBtn.classList.remove('rec'); recBtn.textContent = '🎤 Nói'; } recBtn = null; }
+function toggleMic(btn, ta) {
+  if (!SR) return toast('Trình duyệt chưa hỗ trợ giọng nói – dùng micro trên bàn phím điện thoại nhé.');
+  if (rec) { const same = recBtn === btn; stopMic(); if (same) return; }
+  const r = new SR(); r.lang = voiceLang; r.continuous = true; r.interimResults = true;
+  const base = ta.value ? ta.value.replace(/\s+$/, '') + ' ' : '';
+  r.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; ta.value = base + t.trim(); ta.dispatchEvent(new Event('input', { bubbles: true })); };
+  r.onerror = e => { if (e.error === 'not-allowed') toast('Micro đang bị chặn – hãy cho phép micro.'); };
+  r.onend = () => { if (rec === r) stopMic(); };
+  rec = r; recBtn = btn; btn.classList.add('rec'); btn.textContent = '⏹ ' + (voiceLang === 'en-US' ? 'EN' : 'VI');
+  try { r.start(); } catch (e) { stopMic(); }
+}
+function voiceLabel() { $('voiceBtn').textContent = voiceLang === 'en-US' ? '🇬🇧 Tiếng Anh' : '🇻🇳 Tiếng Việt'; }
+function toggleVoiceLang() { stopMic(); voiceLang = voiceLang === 'en-US' ? 'vi-VN' : 'en-US'; LS.set('dd_voice', voiceLang); voiceLabel(); }
+
+// ---------------- GIÁO VIÊN ----------------
+function showTab(t) {
+  $('ta').classList.toggle('hidden', t !== 'ta'); $('teacher').classList.toggle('hidden', t !== 'teacher');
+  $('tabTA').classList.toggle('on', t === 'ta'); $('tabT').classList.toggle('on', t === 'teacher');
+  $('bar').classList.toggle('hidden', t !== 'ta');
+  if (t === 'ta') loadDay($('taDate').value);
+  else if (teacherPass) { $('tLogin').classList.add('hidden'); $('tArea').classList.remove('hidden'); tSub(tSub.cur || 'day'); }
+}
+async function teacherLogin() {
+  const p = $('tPass').value.trim(); if (!p) return;
+  try {
+    await api('/api/teacher/login', { method: 'POST', body: { pass: p } });
+    teacherPass = p; sessionStorage.setItem('dd_tpass', p); $('tPass').value = ''; $('tLoginErr').textContent = '';
+    $('tabT').textContent = '🔓 Giáo viên'; showTab('teacher');
+  } catch (e) { $('tLoginErr').textContent = e.message; }
+}
+function teacherLogout() { teacherPass = ''; sessionStorage.removeItem('dd_tpass'); $('tabT').textContent = '🔒 Giáo viên'; $('tLogin').classList.remove('hidden'); $('tArea').classList.add('hidden'); }
+function tSub(s) {
+  tSub.cur = s;
+  $('tDay').classList.toggle('hidden', s !== 'day'); $('tMonth').classList.toggle('hidden', s !== 'month');
+  $('tsDay').classList.toggle('on', s === 'day'); $('tsMonth').classList.toggle('on', s === 'month');
+  s === 'day' ? loadDay($('tDate').value, 'teacher') : loadMonth();
+}
+function renderTeacherDay() {
+  const list = Object.values(recs).sort((a, b) => a.student.localeCompare(b.student, 'vi'));
+  const sent = list.filter(r => r.state === 'sent').length;
+  $('btnConfirmDay').textContent = sent ? `✅ Xác nhận ${sent} buổi đã gửi` : '✅ Không có buổi chờ xác nhận';
+  $('btnConfirmDay').disabled = !sent;
+  $('tDayList').innerHTML = list.length ? list.map(r => cardHTML(r, true)).join('') : '<div class="card muted">Ngày này chưa có điểm danh.</div>';
+}
+async function confirmDay() {
+  const ids = Object.values(recs).filter(r => r.state === 'sent').map(r => r.id);
+  if (!ids.length || !confirm(`Xác nhận ${ids.length} buổi? Sau đó trợ giảng không sửa được nữa.`)) return;
+  await flush();
+  try { const d = await api('/api/teacher/confirm', { method: 'POST', body: { ids } }); toast(`Đã xác nhận ${d.count} buổi.`); loadDay($('tDate').value, 'teacher'); }
+  catch (e) { toast(e.message); }
+}
+
+let month = { records: [], evals: {} };
+async function loadMonth() {
+  const m = $('tMonthSel').value; if (!m) return;
+  setSync('Đang tải tháng…');
+  try {
+    const d = await api('/api/teacher/month?month=' + m);
+    month = { records: d.records, evals: Object.fromEntries(d.evals.map(e => [norm(e.student), e.text])) };
+    setSync('✅ Đã đồng bộ');
+  } catch (e) { setSync('⚠️ ' + e.message); }
+  renderMonth();
+}
+function groupMonth() {
+  const cls = $('tCls').value, by = {};
+  month.records.filter(r => r.state !== 'draft').forEach(r => {
+    if (cls !== 'ALL' && r.grade !== cls) return;
+    const k = norm(r.student); (by[k] = by[k] || { name: r.student, grade: r.grade, rows: [] }).rows.push(r);
+  });
+  return Object.values(by).map(g => {
+    const sc = g.rows.filter(r => !isAbsent(r));
+    const avg = f => { const v = sc.filter(r => r[f] != null); return v.length ? (v.reduce((s, r) => s + r[f], 0) / v.length).toFixed(1) : '–'; };
+    return Object.assign(g, { present: sc.length, att: avg('att'), hw: avg('hw'), waiting: g.rows.filter(r => r.state === 'sent').length });
+  }).sort((a, b) => gradeNum(a.grade) - gradeNum(b.grade) || a.name.localeCompare(b.name, 'vi'));
+}
+function renderMonth() {
+  const gs = groupMonth();
+  $('tMonthBody').innerHTML = gs.length ? gs.map(g => `<tr class="click" data-k="${esc(norm(g.name))}"><td><b>${esc(g.name)}</b> <span class="muted">${esc(g.grade)}</span></td><td class="num">${g.rows.length}</td><td class="num">${g.present}</td><td class="num">${g.att}</td><td class="num">${g.hw}</td><td class="num">${g.waiting ? `<span class="badge b-sent">${g.waiting}</span>` : '–'}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="muted">Tháng này chưa có buổi nào trợ giảng đã gửi.</td></tr>';
+  if (renderMonth.open) showReport(renderMonth.open); else $('report').classList.add('hidden');
+}
+$('tMonthBody').addEventListener('click', ev => { const tr = ev.target.closest('tr[data-k]'); if (tr) showReport(tr.dataset.k, true); });
+function showReport(k, scroll) {
+  const g = groupMonth().find(x => norm(x.name) === k);
+  if (!g) { renderMonth.open = null; $('report').classList.add('hidden'); return; }
+  renderMonth.open = k;
+  const m = $('tMonthSel').value, ml = m.slice(5) + '/' + m.slice(0, 4);
+  $('report').classList.remove('hidden');
+  $('report').innerHTML = `
+    <p class="h">📋 ${esc(g.name)} <span class="muted">${esc(g.grade)} · Tháng ${ml}</span>
+      <span class="noprint"><button class="btn-sky" onclick="copyZalo()">📋 Copy gửi Zalo</button> <button onclick="window.print()">🖨 In / PDF</button></span></p>
+    <p class="muted">${g.rows.length} buổi · có mặt ${g.present} · thái độ TB <b>${g.att}</b> · bài tập TB <b>${g.hw}</b>${g.waiting ? ` · <span style="color:var(--sky)">${g.waiting} buổi chờ xác nhận</span>` : ''}</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ngày</th><th>Điểm danh</th><th class="num">Thái độ</th><th class="num">Bài tập</th><th>Bài học · Nhận xét · Dặn dò</th></tr></thead><tbody>
+    ${g.rows.map(r => `<tr><td>${vnDate(r.date)}<div class="muted">${esc(r.slot)}</div></td><td>${STATUS[r.status] || ''}</td><td class="num">${isAbsent(r) || r.att == null ? '–' : r.att}</td><td class="num">${isAbsent(r) || r.hw == null ? '–' : r.hw}</td>
+      <td>${r.lesson ? '<b>' + esc(r.lesson) + '</b><br>' : ''}${esc(r.note)}${r.todo ? '<br><i>Dặn dò: ' + esc(r.todo) + '</i>' : ''}${r.teacher_note ? '<br><b>GV:</b> ' + esc(r.teacher_note) : ''}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="fld" style="margin-top:12px"><label>⭐ Nhận xét cả tháng của giáo viên (tự lưu)</label>
+      <textarea id="monthEval" rows="3" placeholder="Nhận xét chung cho phụ huynh…">${esc(month.evals[k] || '')}</textarea></div>`;
+  $('monthEval').addEventListener('change', async e => {
+    month.evals[k] = e.target.value;
+    try { await api('/api/teacher/eval', { method: 'POST', body: { month: m, student: g.name, text: e.target.value } }); toast('Đã lưu nhận xét tháng.'); }
+    catch (err) { toast('Chưa lưu được: ' + err.message); }
+  });
+  if (scroll) $('report').scrollIntoView({ behavior: 'smooth' });
+}
+function copyZalo() {
+  const k = renderMonth.open, g = groupMonth().find(x => norm(x.name) === k); if (!g) return;
+  const m = $('tMonthSel').value;
+  let t = `📋 BÁO CÁO HỌC TẬP THÁNG ${m.slice(5)}/${m.slice(0, 4)}\n🎓 ${g.name} (${g.grade})\n📊 ${g.rows.length} buổi · có mặt ${g.present} · thái độ TB ${g.att}/10 · bài tập TB ${g.hw}/10\n------------------------\n`;
+  g.rows.forEach((r, i) => {
+    t += `${i + 1}. ${vnDate(r.date)}${r.slot ? ' (' + r.slot + ')' : ''}: ${STATUS[r.status]}`;
+    if (!isAbsent(r)) t += `${r.att != null ? ' · Thái độ ' + r.att + '/10' : ''}${r.hw != null ? ' · Bài tập ' + r.hw + '/10' : ''}`;
+    t += '\n';
+    if (r.lesson) t += `   • Bài: ${r.lesson}\n`;
+    if (r.note) t += `   • Nhận xét: ${r.note}\n`;
+    if (r.todo) t += `   • Dặn dò: ${r.todo}\n`;
+    if (r.teacher_note) t += `   • Giáo viên: ${r.teacher_note}\n`;
+  });
+  const ev = ($('monthEval') || {}).value || month.evals[k];
+  if (ev) t += `------------------------\n⭐ Nhận xét của giáo viên: ${ev}\n`;
+  navigator.clipboard.writeText(t).then(() => toast('Đã copy – dán vào Zalo gửi phụ huynh.'), () => toast('Không copy được, hãy thử lại.'));
+}
+function exportCSV() {
+  const rows = month.records.filter(r => r.state !== 'draft');
+  if (!rows.length) return toast('Tháng này chưa có dữ liệu.');
+  const head = ['Ngày', 'Học sinh', 'Lớp', 'Giờ', 'Điểm danh', 'Thái độ', 'Bài tập', 'Bài học', 'Nhận xét', 'Dặn dò', 'Ghi chú GV', 'Trợ giảng', 'Trạng thái', 'Nhận xét tháng'];
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const lines = rows.map(r => [vnDate(r.date), r.student, r.grade, r.slot, STATUS[r.status], r.att, r.hw, r.lesson, r.note, r.todo, r.teacher_note, r.ta, r.state === 'final' ? 'Đã xác nhận' : 'Chờ xác nhận', month.evals[norm(r.student)] || ''].map(q).join(','));
+  const blob = new Blob(['﻿' + [head.map(q).join(',')].concat(lines).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'DiemDanh_' + $('tMonthSel').value + '.csv'; a.click();
+}
+
+// ---------------- khởi động ----------------
+(function init() {
+  $('taDate').value = todayISO(); $('tDate').value = todayISO(); $('tMonthSel').value = todayISO().slice(0, 7);
+  $('taName').value = LS.get('dd_ta', ''); $('taSlot').value = LS.get('dd_slot', '');
+  $('taName').addEventListener('change', e => LS.set('dd_ta', e.target.value.trim()));
+  $('taSlot').addEventListener('change', e => LS.set('dd_slot', e.target.value.trim()));
+  $('taDate').addEventListener('change', () => loadDay($('taDate').value));
+  $('tDate').addEventListener('change', () => loadDay($('tDate').value, 'teacher'));
+  $('tMonthSel').addEventListener('change', () => { renderMonth.open = null; loadMonth(); });
+  $('tCls').addEventListener('change', renderMonth);
+  $('clsSel').addEventListener('change', () => { LS.set('dd_cls', $('clsSel').value); renderChips(); });
+  let st; $('stuSearch').addEventListener('input', () => { clearTimeout(st); st = setTimeout(renderChips, 120); });
+  voiceLabel();
+  if (teacherPass) $('tabT').textContent = '🔓 Giáo viên';
+  buildClassSelects(); renderChips();
+  loadStudents(false); loadDay($('taDate').value); flush();
+})();
+</script>
+</body>
+</html>
