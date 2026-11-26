@@ -74,17 +74,32 @@
   .tools button { font-size:13px; padding:7px 10px; }
   .saved { font-size:12px; font-weight:700; color:var(--ok); }
   #printArea { display:none; }
-  .rp { font-size:13.5px; color:#111; }
-  .rp h2 { font-size:18px; margin:0 0 2px; } .rp .sub { color:#555; margin-bottom:10px; }
-  .rp .box { border:1px solid #cbd5e1; border-radius:10px; padding:10px 12px; margin:10px 0; white-space:pre-wrap; }
-  .rp table { font-size:12.5px; } .rp th, .rp td { border:1px solid #cbd5e1; }
-  .rp .sign { display:flex; justify-content:space-between; margin-top:24px; color:#444; }
+  .rp { font:16px/1.55 "Segoe UI", Roboto, Arial, sans-serif; color:#111; max-width:760px; margin:0 auto; }
+  .rp-top { text-align:center; border-bottom:3px solid #1e3a8a; padding-bottom:10px; margin-bottom:12px; }
+  .rp-school { font-size:15px; font-weight:700; color:#1e3a8a; letter-spacing:.5px; }
+  .rp h2 { font-size:24px; margin:4px 0 0; color:#111; letter-spacing:.5px; }
+  .rp-month { font-size:18px; font-weight:700; color:#333; }
+  .rp-info { display:flex; flex-wrap:wrap; gap:6px 28px; font-size:17px; margin:6px 0 4px; }
+  .rp h3 { font-size:18px; color:#1e3a8a; margin:18px 0 8px; }
+  .rp-tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .rp-tile { border:2px solid #cbd5e1; border-radius:12px; padding:10px; text-align:center; }
+  .rp-tl { font-size:14px; color:#444; font-weight:600; } .rp-big { font-size:26px; font-weight:800; color:#111; } .rp-sm { font-size:15px; font-weight:700; color:#166534; }
+  .rp-box { border:2px solid #cbd5e1; border-radius:12px; padding:12px 14px; white-space:pre-wrap; font-size:16.5px; line-height:1.65; }
+  .rp-lines div { border-bottom:1.5px solid #94a3b8; height:34px; }
+  .rp-tb { width:100%; border-collapse:collapse; font-size:15px; }
+  .rp-tb th { background:#eef2ff; color:#111; font-size:15px; text-transform:none; font-weight:700; }
+  .rp-tb th, .rp-tb td { border:1px solid #94a3b8; padding:8px 9px; vertical-align:top; }
+  .rp-tb .c { text-align:center; font-weight:700; white-space:nowrap; } .rp-tb .nw { white-space:nowrap; }
+  .rp-ul { margin:0; padding-left:22px; font-size:16px; } .rp-ul li { margin:3px 0; }
+  .rp-sign { display:flex; justify-content:space-around; text-align:center; margin-top:28px; font-weight:700; min-height:110px; }
+  .rp-sign small { font-weight:400; color:#555; }
   #toast { position:fixed; left:50%; transform:translateX(-50%); bottom:90px; z-index:50; background:#0f172a; color:#fff; padding:10px 16px; border-radius:12px; font-weight:700; font-size:14px; max-width:92vw; }
   @media print {
     body > *:not(#printArea) { display:none !important; }
     #printArea { display:block !important; }
+    @page { size:A4; margin:0; }
     body { background:#fff; padding:0; }
-    .rp { page-break-after:always; break-after:page; } .rp:last-child { page-break-after:auto; break-after:auto; }
+    .rp { padding:14mm 14mm 10mm; page-break-after:always; break-after:page; } .rp:last-child { page-break-after:auto; break-after:auto; }
   }
 </style>
 </head>
@@ -506,8 +521,8 @@ function autoComment(g) {
   if (g.late) s += `, đi trễ ${g.late} buổi`;
   if (g.absent) s += `, vắng ${g.absent} buổi`;
   parts.push(s + '.');
-  if (g.attN != null) parts.push(`Thái độ và sự tập trung trong giờ học ${word(g.attN)} (${fmt1(g.attN)}/10).`);
-  if (g.hwN != null) parts.push(`Bài tập và từ vựng ${word(g.hwN)} (${fmt1(g.hwN)}/10)` + (g.trend >= 0.8 ? ', có tiến bộ rõ so với đầu tháng.' : g.trend <= -0.8 ? ', cuối tháng có phần giảm sút, con cần cố gắng hơn.' : '.'));
+  if (g.attN != null) parts.push(`Thái độ và sự tập trung trong giờ học ${word(g.attN)} (${sc(g.attN)}/10).`);
+  if (g.hwN != null) parts.push(`Bài tập và từ vựng ${word(g.hwN)} (${sc(g.hwN)}/10)` + (g.trend >= 0.8 ? ', có tiến bộ rõ so với đầu tháng.' : g.trend <= -0.8 ? ', cuối tháng có phần giảm sút, con cần cố gắng hơn.' : '.'));
   const lessons = uniq(g.rows.map(r => r.lesson));
   if (lessons.length) parts.push('Nội dung đã học: ' + lessons.join(', ') + '.');
   const notes = uniq(g.rows.filter(r => !isAbsent(r)).map(r => r.note)).slice(-3);
@@ -600,17 +615,27 @@ async function draftAll() {
 }
 
 function zaloText(g) {
-  const ev = (month.evals[g.k] || '').trim();
-  let t = `📋 BÁO CÁO HỌC TẬP THÁNG ${monthLabel()}\n🎓 Học sinh: ${g.name} (${g.grade})\n📊 Đi học ${g.present}/${g.rows.length} buổi · Thái độ TB ${g.att}/10 · Bài tập TB ${g.hw}/10\n`;
-  if (ev) t += `\n⭐ NHẬN XÉT CỦA GIÁO VIÊN:\n${ev}\n`;
-  t += `\n🗓 CÁC BUỔI HỌC:\n`;
+  const ev = (month.evals[g.k] || '').trim(), tn = LS.get('dd_tname', '');
+  const ln = [];
+  ln.push(`📋 BÁO CÁO HỌC TẬP THÁNG ${monthLabel()}`);
+  ln.push(`Học sinh: ${g.name} – ${g.grade}`, '');
+  ln.push('📊 KẾT QUẢ THÁNG NÀY');
+  ln.push(`• Đi học: ${g.present}/${g.rows.length} buổi` + (g.late ? `, đi trễ ${g.late} buổi` : '') + (g.absent ? `, vắng ${g.absent} buổi` : ''));
+  if (g.attN != null) ln.push(`• Thái độ học tập: ${sc(g.attN)}/10 – ${word(g.attN)}`);
+  if (g.hwN != null) ln.push(`• Bài tập & từ vựng: ${sc(g.hwN)}/10 – ${word(g.hwN)}` + (g.trend >= 0.8 ? ' (có tiến bộ)' : ''));
+  if (ev) ln.push('', '⭐ NHẬN XÉT CỦA GIÁO VIÊN', ev);
+  ln.push('', '🗓 CHI TIẾT TỪNG BUỔI');
   g.rows.forEach(r => {
-    t += `• ${vnDate(r.date)}: ${STATUS[r.status]}` + (!isAbsent(r) ? `${r.att != null ? ' · Thái độ ' + r.att : ''}${r.hw != null ? ' · Bài tập ' + r.hw : ''}` : '') + (r.lesson ? ` · ${r.lesson}` : '') + '\n';
-    if (r.note) t += `   ${r.note}\n`;
+    let s = `▫️ ${shortDate(r.date)}: ${STATUS[r.status]}`;
+    if (!isAbsent(r)) s += (r.att != null ? ` · Thái độ ${r.att}/10` : '') + (r.hw != null ? ` · Bài tập ${r.hw}/10` : '');
+    ln.push(s);
+    if (r.lesson) ln.push(`   Bài học: ${cap(r.lesson)}`);
+    if (r.note) ln.push(`   Nhận xét: ${dot(r.note)}`);
   });
   const todos = uniq(g.rows.map(r => r.todo)).slice(-3);
-  if (todos.length) t += `\n📌 CẦN ÔN Ở NHÀ:\n` + todos.map(x => '- ' + x).join('\n') + '\n';
-  return t + `\n${LS.get('dd_tname', '') ? '— ' + LS.get('dd_tname', '') : ''}`.trimEnd();
+  if (todos.length) ln.push('', '📌 CON CẦN ÔN Ở NHÀ', ...todos.map(x => '• ' + dot(x)));
+  ln.push('', 'Cảm ơn phụ huynh đã đồng hành cùng con! 🌷' + (tn ? `\n${tn}` : ''));
+  return ln.join('\n');
 }
 function copyAll() {
   const gs = groupMonth(); if (!gs.length) return toast('Chưa có dữ liệu.');
@@ -618,18 +643,36 @@ function copyAll() {
   if (missing && !confirm(`${missing} em chưa có nhận xét tổng hợp. Vẫn copy?`)) return;
   navigator.clipboard.writeText(gs.map(zaloText).join('\n\n━━━━━━━━━━━━━━━━\n\n')).then(() => toast(`Đã copy báo cáo ${gs.length} học sinh.`));
 }
+// ----- phiếu báo cáo cho phụ huynh: chữ to, lời rõ ràng, không viết tắt -----
+const sc = n => n == null ? '–' : (Math.round(n * 10) / 10).toLocaleString('vi-VN');
+const cap = s => { s = String(s || '').trim(); return s ? s[0].toUpperCase() + s.slice(1) : ''; };
+const dot = s => { s = cap(s); return s && !/[.!?…]$/.test(s) ? s + '.' : s; };
+const wordCap = n => cap(word(n)) || 'Chưa chấm';
+const shortDate = s => { const [y, m, d] = String(s).split('-'); const wd = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][new Date(+y, m - 1, +d).getDay()]; return `${wd}, ${d}/${m}`; };
+const STATUS_ICON = { present: '✅ Có mặt', late: '⏰ Đi trễ', excused: '📩 Vắng có phép', absent: '❌ Vắng' };
 function reportHTML(g) {
   const ev = (month.evals[g.k] || '').trim(), todos = uniq(g.rows.map(r => r.todo)).slice(-5), tn = LS.get('dd_tname', '');
+  const tile = (label, big, small) => `<div class="rp-tile"><div class="rp-tl">${label}</div><div class="rp-big">${big}</div><div class="rp-sm">${small}</div></div>`;
   return `<div class="rp">
-    <h2>PHIẾU BÁO CÁO HỌC TẬP – THÁNG ${monthLabel()}</h2>
-    <div class="sub">Học sinh: <b>${esc(g.name)}</b> · Lớp: <b>${esc(g.grade)}</b>${tn ? ' · Giáo viên: <b>' + esc(tn) + '</b>' : ''}</div>
-    <div>Đi học <b>${g.present}/${g.rows.length}</b> buổi${g.late ? ' · trễ ' + g.late : ''}${g.absent ? ' · vắng ' + g.absent : ''} · Thái độ TB <b>${g.att}/10</b> · Bài tập TB <b>${g.hw}/10</b></div>
-    <div class="box"><b>Nhận xét của giáo viên:</b>\n${esc(ev || '…………………………………………………………………………………………')}</div>
-    <table><thead><tr><th>Ngày</th><th>Điểm danh</th><th>Thái độ</th><th>Bài tập</th><th>Bài học & nhận xét</th></tr></thead><tbody>
-    ${g.rows.map(r => `<tr><td>${vnDate(r.date)}</td><td>${STATUS[r.status]}</td><td class="num">${isAbsent(r) || r.att == null ? '–' : r.att}</td><td class="num">${isAbsent(r) || r.hw == null ? '–' : r.hw}</td><td>${r.lesson ? '<b>' + esc(r.lesson) + '</b> ' : ''}${esc(r.note)}</td></tr>`).join('')}
+    <div class="rp-top"><div class="rp-school">MS. NGHI ENGLISH</div>
+      <h2>PHIẾU BÁO CÁO HỌC TẬP</h2><div class="rp-month">Tháng ${monthLabel()}</div></div>
+    <div class="rp-info"><div>Học sinh: <b>${esc(g.name)}</b></div><div>Lớp: <b>${esc(g.grade)}</b></div>${tn ? `<div>Giáo viên: <b>${esc(tn)}</b></div>` : ''}</div>
+    <h3>1. Kết quả tháng này</h3>
+    <div class="rp-tiles">
+      ${tile('Đi học', `${g.present}/${g.rows.length} buổi`, [g.late ? `Đi trễ ${g.late} buổi` : '', g.absent ? `Vắng ${g.absent} buổi` : ''].filter(Boolean).join(' · ') || 'Đi học đầy đủ')}
+      ${tile('Thái độ học tập', g.attN == null ? '–' : sc(g.attN) + '/10', wordCap(g.attN))}
+      ${tile('Bài tập & từ vựng', g.hwN == null ? '–' : sc(g.hwN) + '/10', wordCap(g.hwN) + (g.trend >= 0.8 ? ' · có tiến bộ' : ''))}
+    </div>
+    <h3>2. Nhận xét của giáo viên</h3>
+    ${ev ? `<div class="rp-box">${esc(ev)}</div>` : '<div class="rp-lines"><div></div><div></div><div></div></div>'}
+    <h3>3. Chi tiết từng buổi học</h3>
+    <table class="rp-tb"><thead><tr><th>Ngày</th><th>Đi học</th><th>Thái độ</th><th>Bài tập</th><th>Bài học và nhận xét</th></tr></thead><tbody>
+    ${g.rows.map(r => `<tr><td class="nw">${shortDate(r.date)}</td><td class="nw">${STATUS_ICON[r.status]}</td>
+      <td class="c">${isAbsent(r) || r.att == null ? '–' : r.att + '/10'}</td><td class="c">${isAbsent(r) || r.hw == null ? '–' : r.hw + '/10'}</td>
+      <td>${r.lesson ? `<b>${esc(cap(r.lesson))}</b><br>` : ''}${esc(dot(r.note)) || (isAbsent(r) ? 'Con nghỉ buổi này.' : '')}</td></tr>`).join('')}
     </tbody></table>
-    ${todos.length ? `<div class="box"><b>Con cần ôn ở nhà:</b>\n${todos.map(x => '• ' + esc(x)).join('\n')}</div>` : ''}
-    <div class="sign"><span>Phụ huynh ký</span><span>Giáo viên ${esc(tn)}</span></div>
+    ${todos.length ? `<h3>4. Con cần ôn ở nhà</h3><ul class="rp-ul">${todos.map(x => `<li>${esc(dot(x))}</li>`).join('')}</ul>` : ''}
+    <div class="rp-sign"><div>Phụ huynh<br><small>(ký, ghi rõ họ tên)</small></div><div>Giáo viên<br><small>${esc(tn)}</small></div></div>
   </div>`;
 }
 function printReports(list) {
