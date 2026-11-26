@@ -59,10 +59,32 @@
   th { color:var(--mut); font-size:11px; text-transform:uppercase; }
   tr.click { cursor:pointer; } tr.click:hover { background:#f8fafc; }
   .num { text-align:center; white-space:nowrap; }
+  .prog { height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden; } .prog div { height:100%; background:var(--ok); width:0; transition:width .3s; }
+  .sum { background:#fff; border:2px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; }
+  .sum.done { border-color:#86efac; }
+  .sum-head { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .stats { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .stat { background:#f1f5f9; border-radius:10px; padding:4px 9px; font-size:12px; font-weight:700; }
+  .stat b { font-size:14px; }
+  details.tl { background:#f8fafc; border-radius:12px; padding:8px 10px; margin-bottom:8px; font-size:13px; }
+  details.tl summary { cursor:pointer; font-weight:700; color:var(--mut); }
+  .tl-row { border-top:1px dashed var(--line); padding:6px 0; }
+  .tl-row:first-of-type { border-top:0; }
+  .tools { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .tools button { font-size:13px; padding:7px 10px; }
+  .saved { font-size:12px; font-weight:700; color:var(--ok); }
+  #printArea { display:none; }
+  .rp { font-size:13.5px; color:#111; }
+  .rp h2 { font-size:18px; margin:0 0 2px; } .rp .sub { color:#555; margin-bottom:10px; }
+  .rp .box { border:1px solid #cbd5e1; border-radius:10px; padding:10px 12px; margin:10px 0; white-space:pre-wrap; }
+  .rp table { font-size:12.5px; } .rp th, .rp td { border:1px solid #cbd5e1; }
+  .rp .sign { display:flex; justify-content:space-between; margin-top:24px; color:#444; }
   #toast { position:fixed; left:50%; transform:translateX(-50%); bottom:90px; z-index:50; background:#0f172a; color:#fff; padding:10px 16px; border-radius:12px; font-weight:700; font-size:14px; max-width:92vw; }
   @media print {
-    header, #bar, #pend, .noprint, #ta, #tDay, #toast { display:none !important; }
-    body { background:#fff; padding:0; } .card { border:0; }
+    body > *:not(#printArea) { display:none !important; }
+    #printArea { display:block !important; }
+    body { background:#fff; padding:0; }
+    .rp { page-break-after:always; break-after:page; } .rp:last-child { page-break-after:auto; break-after:auto; }
   }
 </style>
 </head>
@@ -115,7 +137,7 @@
       <div class="card noprint" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
         <div class="seg" style="margin:0">
           <button id="tsDay" class="on" onclick="tSub('day')">Duyệt theo ngày</button>
-          <button id="tsMonth" onclick="tSub('month')">Tổng hợp theo tháng</button>
+          <button id="tsMonth" onclick="tSub('month')">📨 Nhận xét & báo cáo phụ huynh</button>
         </div>
         <button onclick="teacherLogout()">🔒 Khóa lại</button>
       </div>
@@ -134,14 +156,19 @@
           <div class="row">
             <div><label for="tMonthSel">Tháng</label><input id="tMonthSel" type="month"></div>
             <div><label for="tCls">Lớp</label><select id="tCls"></select></div>
-            <div><label>&nbsp;</label><button onclick="exportCSV()">⬇️ Xuất Excel (CSV) cả tháng</button></div>
+            <div><label for="tName">Tên giáo viên trên phiếu</label><input id="tName" placeholder="VD: Ms. Nghi"></div>
+            <div><label for="tFilter">Hiển thị</label><select id="tFilter"><option value="all">Tất cả học sinh</option><option value="todo">Chưa có nhận xét tổng hợp</option><option value="done">Đã có nhận xét</option></select></div>
+          </div>
+          <div class="prog" style="margin-top:12px"><div id="progBar"></div></div>
+          <p class="muted" id="progTxt" style="margin:6px 0 10px"></p>
+          <div class="chips">
+            <button class="btn-pri" onclick="draftAll()">✨ Tạo nhận xét tự động cho các em chưa có</button>
+            <button class="btn-sky" onclick="copyAll()">📋 Copy tất cả (Zalo)</button>
+            <button onclick="printReports()">🖨 In / PDF báo cáo cả lớp</button>
+            <button onclick="exportCSV()">⬇️ Excel (CSV)</button>
           </div>
         </div>
-        <div class="card noprint">
-          <p class="h">Học sinh trong tháng <span class="muted">Bấm một em để xem chi tiết & gửi phụ huynh</span></p>
-          <div style="overflow-x:auto"><table><thead><tr><th>Học sinh</th><th class="num">Buổi</th><th class="num">Có mặt</th><th class="num">Thái độ TB</th><th class="num">Bài tập TB</th><th class="num">Chờ xác nhận</th></tr></thead><tbody id="tMonthBody"></tbody></table></div>
-        </div>
-        <div class="card hidden" id="report"></div>
+        <div id="sumList"></div>
       </div>
     </div>
   </section>
@@ -151,6 +178,7 @@
   <span class="info" id="barInfo"></span>
   <button class="btn-pri" id="btnSend" onclick="sendDay()">📨 Gửi giáo viên</button>
 </div>
+<div id="printArea"></div>
 <div id="toast" class="hidden" role="status" aria-live="polite"></div>
 
 <script>
@@ -450,61 +478,166 @@ function groupMonth() {
   const cls = $('tCls').value, by = {};
   month.records.filter(r => r.state !== 'draft').forEach(r => {
     if (cls !== 'ALL' && r.grade !== cls) return;
-    const k = norm(r.student); (by[k] = by[k] || { name: r.student, grade: r.grade, rows: [] }).rows.push(r);
+    const k = norm(r.student); (by[k] = by[k] || { k, name: r.student, grade: r.grade, rows: [] }).rows.push(r);
   });
+  const avgOf = (rows, f) => { const v = rows.filter(r => !isAbsent(r) && r[f] != null); return v.length ? v.reduce((s, r) => s + r[f], 0) / v.length : null; };
   return Object.values(by).map(g => {
-    const sc = g.rows.filter(r => !isAbsent(r));
-    const avg = f => { const v = sc.filter(r => r[f] != null); return v.length ? (v.reduce((s, r) => s + r[f], 0) / v.length).toFixed(1) : '–'; };
-    return Object.assign(g, { present: sc.length, att: avg('att'), hw: avg('hw'), waiting: g.rows.filter(r => r.state === 'sent').length });
+    g.rows.sort((a, b) => a.date.localeCompare(b.date));
+    const half = Math.ceil(g.rows.length / 2), a1 = avgOf(g.rows.slice(0, half), 'hw'), a2 = avgOf(g.rows.slice(half), 'hw');
+    return Object.assign(g, {
+      present: g.rows.filter(r => !isAbsent(r)).length,
+      late: g.rows.filter(r => r.status === 'late').length,
+      absent: g.rows.filter(isAbsent).length,
+      attN: avgOf(g.rows, 'att'), hwN: avgOf(g.rows, 'hw'),
+      trend: g.rows.length >= 4 && a1 != null && a2 != null ? a2 - a1 : 0,
+      waiting: g.rows.filter(r => r.state === 'sent').length
+    }, { att: fmt1(avgOf(g.rows, 'att')), hw: fmt1(avgOf(g.rows, 'hw')) });
   }).sort((a, b) => gradeNum(a.grade) - gradeNum(b.grade) || a.name.localeCompare(b.name, 'vi'));
 }
+const fmt1 = n => n == null ? '–' : n.toFixed(1);
+const uniq = arr => { const s = new Set(); return arr.map(x => String(x || '').trim()).filter(x => x && !s.has(norm(x)) && s.add(norm(x))); };
+const word = n => n == null ? '' : n >= 9 ? 'rất tốt' : n >= 8 ? 'tốt' : n >= 6.5 ? 'khá' : n >= 5 ? 'trung bình' : 'cần cố gắng nhiều hơn';
+const monthLabel = () => { const m = $('tMonthSel').value; return m.slice(5) + '/' + m.slice(0, 4); };
+
+// Gợi ý nhận xét tổng hợp từ điểm và nhận xét các buổi – giáo viên sửa lại trước khi gửi
+function autoComment(g) {
+  const parts = [];
+  let s = `Trong tháng ${monthLabel()}, con đi học ${g.present}/${g.rows.length} buổi`;
+  if (g.late) s += `, đi trễ ${g.late} buổi`;
+  if (g.absent) s += `, vắng ${g.absent} buổi`;
+  parts.push(s + '.');
+  if (g.attN != null) parts.push(`Thái độ và sự tập trung trong giờ học ${word(g.attN)} (${fmt1(g.attN)}/10).`);
+  if (g.hwN != null) parts.push(`Bài tập và từ vựng ${word(g.hwN)} (${fmt1(g.hwN)}/10)` + (g.trend >= 0.8 ? ', có tiến bộ rõ so với đầu tháng.' : g.trend <= -0.8 ? ', cuối tháng có phần giảm sút, con cần cố gắng hơn.' : '.'));
+  const lessons = uniq(g.rows.map(r => r.lesson));
+  if (lessons.length) parts.push('Nội dung đã học: ' + lessons.join(', ') + '.');
+  const notes = uniq(g.rows.filter(r => !isAbsent(r)).map(r => r.note)).slice(-3);
+  if (notes.length) parts.push('Nhận xét trên lớp: ' + notes.map(n => n.replace(/[.\s]+$/, '')).join('; ') + '.');
+  const todos = uniq(g.rows.map(r => r.todo)).slice(-3);
+  if (todos.length) parts.push('Con cần ôn thêm: ' + todos.map(n => n.replace(/[.\s]+$/, '')).join('; ') + '.');
+  const avg = [g.attN, g.hwN].filter(x => x != null);
+  const m = avg.length ? avg.reduce((a, b) => a + b, 0) / avg.length : null;
+  parts.push(m == null ? 'Mong phụ huynh nhắc con đi học đều hơn.' : m >= 8 ? 'Con đang học rất tốt, mong phụ huynh tiếp tục động viên con.' : m >= 6.5 ? 'Mong phụ huynh nhắc con ôn bài ở nhà để tiến bộ hơn.' : 'Mong phụ huynh phối hợp kèm con ôn bài ở nhà thường xuyên hơn.');
+  return parts.join(' ');
+}
+
 function renderMonth() {
-  const gs = groupMonth();
-  $('tMonthBody').innerHTML = gs.length ? gs.map(g => `<tr class="click" data-k="${esc(norm(g.name))}"><td><b>${esc(g.name)}</b> <span class="muted">${esc(g.grade)}</span></td><td class="num">${g.rows.length}</td><td class="num">${g.present}</td><td class="num">${g.att}</td><td class="num">${g.hw}</td><td class="num">${g.waiting ? `<span class="badge b-sent">${g.waiting}</span>` : '–'}</td></tr>`).join('')
-    : '<tr><td colspan="6" class="muted">Tháng này chưa có buổi nào trợ giảng đã gửi.</td></tr>';
-  if (renderMonth.open) showReport(renderMonth.open); else $('report').classList.add('hidden');
+  const gs = groupMonth(), f = $('tFilter').value;
+  const done = gs.filter(g => (month.evals[g.k] || '').trim()).length;
+  $('progBar').style.width = gs.length ? (done / gs.length * 100) + '%' : '0';
+  $('progTxt').textContent = gs.length ? `Đã có nhận xét tổng hợp: ${done}/${gs.length} học sinh · tháng ${monthLabel()}` : '';
+  const list = gs.filter(g => f === 'all' || (f === 'done') === !!(month.evals[g.k] || '').trim());
+  $('sumList').innerHTML = list.length ? list.map(sumCard).join('')
+    : `<div class="card muted">${gs.length ? 'Không có học sinh nào trong bộ lọc này.' : 'Tháng này chưa có buổi nào trợ giảng đã gửi.'}</div>`;
 }
-$('tMonthBody').addEventListener('click', ev => { const tr = ev.target.closest('tr[data-k]'); if (tr) showReport(tr.dataset.k, true); });
-function showReport(k, scroll) {
-  const g = groupMonth().find(x => norm(x.name) === k);
-  if (!g) { renderMonth.open = null; $('report').classList.add('hidden'); return; }
-  renderMonth.open = k;
-  const m = $('tMonthSel').value, ml = m.slice(5) + '/' + m.slice(0, 4);
-  $('report').classList.remove('hidden');
-  $('report').innerHTML = `
-    <p class="h">📋 ${esc(g.name)} <span class="muted">${esc(g.grade)} · Tháng ${ml}</span>
-      <span class="noprint"><button class="btn-sky" onclick="copyZalo()">📋 Copy gửi Zalo</button> <button onclick="window.print()">🖨 In / PDF</button></span></p>
-    <p class="muted">${g.rows.length} buổi · có mặt ${g.present} · thái độ TB <b>${g.att}</b> · bài tập TB <b>${g.hw}</b>${g.waiting ? ` · <span style="color:var(--sky)">${g.waiting} buổi chờ xác nhận</span>` : ''}</p>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ngày</th><th>Điểm danh</th><th class="num">Thái độ</th><th class="num">Bài tập</th><th>Bài học · Nhận xét · Dặn dò</th></tr></thead><tbody>
-    ${g.rows.map(r => `<tr><td>${vnDate(r.date)}<div class="muted">${esc(r.slot)}</div></td><td>${STATUS[r.status] || ''}</td><td class="num">${isAbsent(r) || r.att == null ? '–' : r.att}</td><td class="num">${isAbsent(r) || r.hw == null ? '–' : r.hw}</td>
-      <td>${r.lesson ? '<b>' + esc(r.lesson) + '</b><br>' : ''}${esc(r.note)}${r.todo ? '<br><i>Dặn dò: ' + esc(r.todo) + '</i>' : ''}${r.teacher_note ? '<br><b>GV:</b> ' + esc(r.teacher_note) : ''}</td></tr>`).join('')}
-    </tbody></table></div>
-    <div class="fld" style="margin-top:12px"><label>⭐ Nhận xét cả tháng của giáo viên (tự lưu)</label>
-      <textarea id="monthEval" rows="3" placeholder="Nhận xét chung cho phụ huynh…">${esc(month.evals[k] || '')}</textarea></div>`;
-  $('monthEval').addEventListener('change', async e => {
-    month.evals[k] = e.target.value;
-    try { await api('/api/teacher/eval', { method: 'POST', body: { month: m, student: g.name, text: e.target.value } }); toast('Đã lưu nhận xét tháng.'); }
-    catch (err) { toast('Chưa lưu được: ' + err.message); }
+function sumCard(g) {
+  const ev = month.evals[g.k] || '';
+  return `<div class="sum ${ev.trim() ? 'done' : ''}" data-k="${esc(g.k)}">
+    <div class="sum-head"><div><span class="stu-name">${esc(g.name)}</span> <span class="muted">${esc(g.grade)}</span></div>
+      <span class="badge ${ev.trim() ? 'b-final' : 'b-draft'}" data-evbadge>${ev.trim() ? '✅ Đã có nhận xét' : '✏️ Chưa có nhận xét'}</span></div>
+    <div class="stats">
+      <span class="stat">📅 <b>${g.present}/${g.rows.length}</b> buổi</span>
+      ${g.late ? `<span class="stat">⏰ trễ <b>${g.late}</b></span>` : ''}${g.absent ? `<span class="stat">❌ vắng <b>${g.absent}</b></span>` : ''}
+      <span class="stat">🙂 Thái độ <b>${g.att}</b></span><span class="stat">📚 Bài tập <b>${g.hw}</b></span>
+      ${g.trend >= 0.8 ? '<span class="stat" style="background:#dcfce7">📈 tiến bộ</span>' : g.trend <= -0.8 ? '<span class="stat" style="background:#ffe4e6">📉 giảm</span>' : ''}
+      ${g.waiting ? `<span class="stat" style="background:#e0f2fe">${g.waiting} buổi chờ xác nhận</span>` : ''}
+    </div>
+    <details class="tl"><summary>Xem nhận xét từng buổi (${g.rows.length})</summary>
+      ${g.rows.map(r => `<div class="tl-row"><b>${vnDate(r.date)}</b> · ${STATUS[r.status]}${!isAbsent(r) && r.att != null ? ' · Thái độ ' + r.att : ''}${!isAbsent(r) && r.hw != null ? ' · Bài tập ' + r.hw : ''}${r.lesson ? ' · <i>' + esc(r.lesson) + '</i>' : ''}
+        ${r.note ? '<div>💬 ' + esc(r.note) + '</div>' : ''}${r.todo ? '<div>📌 ' + esc(r.todo) + '</div>' : ''}${r.teacher_note ? '<div>👩‍🏫 ' + esc(r.teacher_note) + '</div>' : ''}</div>`).join('')}
+    </details>
+    <label>Nhận xét tổng hợp gửi phụ huynh <span class="saved" data-saved></span> <button class="mic" data-act="mic2">🎤 Nói</button></label>
+    <textarea rows="6" data-ev placeholder="Bấm ✨ để tạo bản nháp từ các buổi học, rồi sửa lại cho phù hợp…">${esc(ev)}</textarea>
+    <div class="tools">
+      <button class="btn-pri" data-sact="auto">✨ Tạo nhận xét tự động</button>
+      <button class="btn-sky" data-sact="zalo">📋 Copy gửi Zalo</button>
+      <button data-sact="print">🖨 In báo cáo em này</button>
+    </div>
+  </div>`;
+}
+
+const evTimers = {};
+function saveEval(k, text, el) {
+  month.evals[k] = text;
+  const card = el && el.closest('.sum');
+  if (card) {
+    card.classList.toggle('done', !!text.trim());
+    const b = card.querySelector('[data-evbadge]'); b.className = 'badge ' + (text.trim() ? 'b-final' : 'b-draft'); b.textContent = text.trim() ? '✅ Đã có nhận xét' : '✏️ Chưa có nhận xét';
+    card.querySelector('[data-saved]').textContent = 'đang lưu…';
+  }
+  clearTimeout(evTimers[k]);
+  evTimers[k] = setTimeout(async () => {
+    const g = groupMonth().find(x => x.k === k), sv = card && card.querySelector('[data-saved]');
+    try { await api('/api/teacher/eval', { method: 'POST', body: { month: $('tMonthSel').value, student: g ? g.name : k, text } }); if (sv) sv.textContent = '✓ đã lưu'; }
+    catch (e) { if (sv) { sv.textContent = '⚠️ chưa lưu'; sv.style.color = 'var(--bad)'; } toast('Chưa lưu được nhận xét: ' + e.message); }
+    const gs = groupMonth(), done = gs.filter(x => (month.evals[x.k] || '').trim()).length;
+    $('progBar').style.width = gs.length ? (done / gs.length * 100) + '%' : '0';
+    $('progTxt').textContent = `Đã có nhận xét tổng hợp: ${done}/${gs.length} học sinh · tháng ${monthLabel()}`;
+  }, 700);
+}
+$('sumList').addEventListener('input', ev => { if (ev.target.matches('textarea[data-ev]')) saveEval(ev.target.closest('.sum').dataset.k, ev.target.value, ev.target); });
+$('sumList').addEventListener('click', ev => {
+  const btn = ev.target.closest('button'); if (!btn) return;
+  const card = btn.closest('.sum'), k = card.dataset.k, g = groupMonth().find(x => x.k === k), ta = card.querySelector('textarea[data-ev]');
+  if (btn.dataset.act === 'mic2') return toggleMic(btn, ta);
+  if (btn.dataset.sact === 'auto') {
+    if (ta.value.trim() && !confirm('Thay nhận xét hiện tại bằng bản tạo tự động?')) return;
+    ta.value = autoComment(g); saveEval(k, ta.value, ta); ta.focus();
+  } else if (btn.dataset.sact === 'zalo') {
+    navigator.clipboard.writeText(zaloText(g)).then(() => toast('Đã copy – dán vào Zalo gửi phụ huynh ' + g.name), () => toast('Không copy được, thử lại nhé.'));
+  } else if (btn.dataset.sact === 'print') printReports([g]);
+});
+
+async function draftAll() {
+  const gs = groupMonth().filter(g => !(month.evals[g.k] || '').trim());
+  if (!gs.length) return toast('Em nào cũng đã có nhận xét rồi.');
+  if (!confirm(`Tạo nhận xét tự động cho ${gs.length} học sinh chưa có? (Em đã có nhận xét sẽ giữ nguyên.)`)) return;
+  const items = gs.map(g => ({ student: g.name, text: autoComment(g) }));
+  try {
+    await api('/api/teacher/evals', { method: 'POST', body: { month: $('tMonthSel').value, items } });
+    gs.forEach((g, i) => month.evals[g.k] = items[i].text);
+    renderMonth(); toast(`Đã tạo nhận xét cho ${gs.length} học sinh – hãy đọc lại và sửa nếu cần.`);
+  } catch (e) { toast('Chưa tạo được: ' + e.message); }
+}
+
+function zaloText(g) {
+  const ev = (month.evals[g.k] || '').trim();
+  let t = `📋 BÁO CÁO HỌC TẬP THÁNG ${monthLabel()}\n🎓 Học sinh: ${g.name} (${g.grade})\n📊 Đi học ${g.present}/${g.rows.length} buổi · Thái độ TB ${g.att}/10 · Bài tập TB ${g.hw}/10\n`;
+  if (ev) t += `\n⭐ NHẬN XÉT CỦA GIÁO VIÊN:\n${ev}\n`;
+  t += `\n🗓 CÁC BUỔI HỌC:\n`;
+  g.rows.forEach(r => {
+    t += `• ${vnDate(r.date)}: ${STATUS[r.status]}` + (!isAbsent(r) ? `${r.att != null ? ' · Thái độ ' + r.att : ''}${r.hw != null ? ' · Bài tập ' + r.hw : ''}` : '') + (r.lesson ? ` · ${r.lesson}` : '') + '\n';
+    if (r.note) t += `   ${r.note}\n`;
   });
-  if (scroll) $('report').scrollIntoView({ behavior: 'smooth' });
+  const todos = uniq(g.rows.map(r => r.todo)).slice(-3);
+  if (todos.length) t += `\n📌 CẦN ÔN Ở NHÀ:\n` + todos.map(x => '- ' + x).join('\n') + '\n';
+  return t + `\n${LS.get('dd_tname', '') ? '— ' + LS.get('dd_tname', '') : ''}`.trimEnd();
 }
-function copyZalo() {
-  const k = renderMonth.open, g = groupMonth().find(x => norm(x.name) === k); if (!g) return;
-  const m = $('tMonthSel').value;
-  let t = `📋 BÁO CÁO HỌC TẬP THÁNG ${m.slice(5)}/${m.slice(0, 4)}\n🎓 ${g.name} (${g.grade})\n📊 ${g.rows.length} buổi · có mặt ${g.present} · thái độ TB ${g.att}/10 · bài tập TB ${g.hw}/10\n------------------------\n`;
-  g.rows.forEach((r, i) => {
-    t += `${i + 1}. ${vnDate(r.date)}${r.slot ? ' (' + r.slot + ')' : ''}: ${STATUS[r.status]}`;
-    if (!isAbsent(r)) t += `${r.att != null ? ' · Thái độ ' + r.att + '/10' : ''}${r.hw != null ? ' · Bài tập ' + r.hw + '/10' : ''}`;
-    t += '\n';
-    if (r.lesson) t += `   • Bài: ${r.lesson}\n`;
-    if (r.note) t += `   • Nhận xét: ${r.note}\n`;
-    if (r.todo) t += `   • Dặn dò: ${r.todo}\n`;
-    if (r.teacher_note) t += `   • Giáo viên: ${r.teacher_note}\n`;
-  });
-  const ev = ($('monthEval') || {}).value || month.evals[k];
-  if (ev) t += `------------------------\n⭐ Nhận xét của giáo viên: ${ev}\n`;
-  navigator.clipboard.writeText(t).then(() => toast('Đã copy – dán vào Zalo gửi phụ huynh.'), () => toast('Không copy được, hãy thử lại.'));
+function copyAll() {
+  const gs = groupMonth(); if (!gs.length) return toast('Chưa có dữ liệu.');
+  const missing = gs.filter(g => !(month.evals[g.k] || '').trim()).length;
+  if (missing && !confirm(`${missing} em chưa có nhận xét tổng hợp. Vẫn copy?`)) return;
+  navigator.clipboard.writeText(gs.map(zaloText).join('\n\n━━━━━━━━━━━━━━━━\n\n')).then(() => toast(`Đã copy báo cáo ${gs.length} học sinh.`));
 }
+function reportHTML(g) {
+  const ev = (month.evals[g.k] || '').trim(), todos = uniq(g.rows.map(r => r.todo)).slice(-5), tn = LS.get('dd_tname', '');
+  return `<div class="rp">
+    <h2>PHIẾU BÁO CÁO HỌC TẬP – THÁNG ${monthLabel()}</h2>
+    <div class="sub">Học sinh: <b>${esc(g.name)}</b> · Lớp: <b>${esc(g.grade)}</b>${tn ? ' · Giáo viên: <b>' + esc(tn) + '</b>' : ''}</div>
+    <div>Đi học <b>${g.present}/${g.rows.length}</b> buổi${g.late ? ' · trễ ' + g.late : ''}${g.absent ? ' · vắng ' + g.absent : ''} · Thái độ TB <b>${g.att}/10</b> · Bài tập TB <b>${g.hw}/10</b></div>
+    <div class="box"><b>Nhận xét của giáo viên:</b>\n${esc(ev || '…………………………………………………………………………………………')}</div>
+    <table><thead><tr><th>Ngày</th><th>Điểm danh</th><th>Thái độ</th><th>Bài tập</th><th>Bài học & nhận xét</th></tr></thead><tbody>
+    ${g.rows.map(r => `<tr><td>${vnDate(r.date)}</td><td>${STATUS[r.status]}</td><td class="num">${isAbsent(r) || r.att == null ? '–' : r.att}</td><td class="num">${isAbsent(r) || r.hw == null ? '–' : r.hw}</td><td>${r.lesson ? '<b>' + esc(r.lesson) + '</b> ' : ''}${esc(r.note)}</td></tr>`).join('')}
+    </tbody></table>
+    ${todos.length ? `<div class="box"><b>Con cần ôn ở nhà:</b>\n${todos.map(x => '• ' + esc(x)).join('\n')}</div>` : ''}
+    <div class="sign"><span>Phụ huynh ký</span><span>Giáo viên ${esc(tn)}</span></div>
+  </div>`;
+}
+function printReports(list) {
+  list = list || groupMonth(); if (!list.length) return toast('Chưa có dữ liệu để in.');
+  $('printArea').innerHTML = list.map(reportHTML).join('');
+  setTimeout(() => window.print(), 50);
+}
+addEventListener('afterprint', () => { $('printArea').innerHTML = ''; });
 function exportCSV() {
   const rows = month.records.filter(r => r.state !== 'draft');
   if (!rows.length) return toast('Tháng này chưa có dữ liệu.');
@@ -523,7 +656,9 @@ function exportCSV() {
   $('taSlot').addEventListener('change', e => LS.set('dd_slot', e.target.value.trim()));
   $('taDate').addEventListener('change', () => loadDay($('taDate').value));
   $('tDate').addEventListener('change', () => loadDay($('tDate').value, 'teacher'));
-  $('tMonthSel').addEventListener('change', () => { renderMonth.open = null; loadMonth(); });
+  $('tMonthSel').addEventListener('change', loadMonth);
+  $('tFilter').addEventListener('change', renderMonth);
+  $('tName').value = LS.get('dd_tname', ''); $('tName').addEventListener('change', e => LS.set('dd_tname', e.target.value.trim()));
   $('tCls').addEventListener('change', renderMonth);
   $('clsSel').addEventListener('change', () => { LS.set('dd_cls', $('clsSel').value); renderChips(); });
   let st; $('stuSearch').addEventListener('input', () => { clearTimeout(st); st = setTimeout(renderChips, 120); });
