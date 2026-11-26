@@ -1,0 +1,18 @@
+name = "diemdanh"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "diemdanh"
+database_id = "eec85393-3bac-41e8-8c33-2074f82986c5"
+
+[vars]
+TRABAI_URL = "https://script.google.com/macros/s/AKfycbwz5Dy_QesIAxt1SddihNqaj28Xzbn2GmeA2makQQ7HviHn2nlQgbtdifBtoP1_6hkEGQ/exec"
+# Mật khẩu giáo viên: KHÔNG ghi ở đây. Đặt bằng lệnh:  npx wrangler secret put TEACHER_PASS
+# (Chưa đặt thì mặc định là 130213.)
+# Mã trợ giảng (tuỳ chọn):                             npx wrangler secret put TA_PIN
