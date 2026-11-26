@@ -157,6 +157,13 @@ async function api(req, env, url) {
       .bind(month, student, str(body.text, 4000), now()).run();
     return json({ ok: true });
   }
+  if (path === '/api/teacher/evals' && method === 'POST') {
+    const month = str(body.month, 7);
+    const items = (body.items || []).map(x => ({ student: str(x && x.student, 120), text: str(x && x.text, 4000) })).filter(x => x.student).slice(0, 300);
+    if (!isMonth(month)) return fail('Tháng không hợp lệ');
+    if (items.length) await env.DB.batch(items.map(x => env.DB.prepare('INSERT INTO month_evals (month, student, text, updated_at) VALUES (?,?,?,?) ON CONFLICT(month, student) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at').bind(month, x.student, x.text, now())));
+    return json({ ok: true, count: items.length });
+  }
   return fail('Không có chức năng này', 404);
 }
 
